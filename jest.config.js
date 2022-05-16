@@ -20,6 +20,8 @@ module.exports = {
       __DYE_RED_BRIGHT__: '',
       __DYE_BOLD__: '',
       __DYE_RESET__: '',
+      __DYE_RED__: '',
+      __DYE_COLOR_OFF__: '',
       __VERSION__: 'JEST_TEST',
     }
 }
