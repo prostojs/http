@@ -4,8 +4,13 @@ export interface THttpOptions {
     port: number    
 }
 
-export function createServer(opts: THttpOptions, cb: RequestListener) {
+export function createServer(opts: THttpOptions, cb: RequestListener, hostname?: string, onListen?: () => void) {
     const server = http.createServer(cb)
-    server.listen(opts.port)
+    if (hostname) {
+        server.listen(opts.port, hostname, onListen)
+    } else {
+        server.listen(opts.port, onListen)
+    }
+    
     return server
 }

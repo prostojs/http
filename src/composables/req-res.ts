@@ -44,7 +44,7 @@ export function useRequest() {
 }
 
 type TUseResponseOptions = {
-    passthrough: boolean
+    passthrough: boolean // when true: keep building response via framework
 }
 
 export function useResponse() {
@@ -52,7 +52,7 @@ export function useResponse() {
     const res = useCurrentHttpContext().res
 
     const rawResponse = (options?: TUseResponseOptions) => {
-        if (!options?.passthrough) cache.responded = true
+        if (!options || !options.passthrough) cache.responded = true
         return res
     }
 

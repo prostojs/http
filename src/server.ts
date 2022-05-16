@@ -21,12 +21,24 @@ export class ProstoHttpServer {
         }).bind(this)
     }
 
-    public listen(port: number) {
+    public listen(port: number): void
+
+    public listen(port: number, cb: () => void): void
+
+    public listen(port: number, hostname: string): void
+
+    public listen(port: number, hostname: string, cb: () => void): void
+
+    public listen(port: number, hostname?: string | (() => void) , cb?: () => void): void {
         process.on('uncaughtException', this._uncoughtExceptionHandler)
-        this.server = createServer({
-            port,
-        },
-        this.processRequest.bind(this))
+        this.server = createServer(
+            {
+                port,
+            },
+            this.processRequest.bind(this),
+            typeof hostname === 'string' ? hostname : '',
+            typeof hostname === 'function' ? hostname : cb,
+        )
     }
 
     public close() {
@@ -110,6 +122,22 @@ export class ProstoHttpServer {
 
     get<ResType = unknown, ParamsType = TProstoParamsType>(path: string, handler: TProstoHttpHandler<ResType, ParamsType>) {
         return this.router.on<ParamsType, TProstoHttpHandler>('GET', path, handler)
+    }
+
+    post<ResType = unknown, ParamsType = TProstoParamsType>(path: string, handler: TProstoHttpHandler<ResType, ParamsType>) {
+        return this.router.on<ParamsType, TProstoHttpHandler>('POST', path, handler)
+    }
+
+    put<ResType = unknown, ParamsType = TProstoParamsType>(path: string, handler: TProstoHttpHandler<ResType, ParamsType>) {
+        return this.router.on<ParamsType, TProstoHttpHandler>('PUT', path, handler)
+    }
+
+    delete<ResType = unknown, ParamsType = TProstoParamsType>(path: string, handler: TProstoHttpHandler<ResType, ParamsType>) {
+        return this.router.on<ParamsType, TProstoHttpHandler>('DELETE', path, handler)
+    }
+
+    patch<ResType = unknown, ParamsType = TProstoParamsType>(path: string, handler: TProstoHttpHandler<ResType, ParamsType>) {
+        return this.router.on<ParamsType, TProstoHttpHandler>('PATCH', path, handler)
     }
 
     on<ResType = unknown, ParamsType = TProstoParamsType>(method: THttpMethod | '*', path: string, handler: TProstoHttpHandler<ResType, ParamsType>) {

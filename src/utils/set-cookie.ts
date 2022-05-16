@@ -1,3 +1,4 @@
+import { panic } from './panic'
 import { convertTime, TProstoTimeMultiString } from './time'
 
 export type TSetCookieData = { value: string, attrs: Partial<TCookieAttributes> }
@@ -19,6 +20,8 @@ export function renderCookie(key: string, data: TSetCookieData) {
         if (typeof func === 'function') {
             const val = func(v)
             attrs += val ? '; ' + val  : ''
+        } else {
+            panic('Unknown Set-Cookie attribute ' + a)
         }
     }
     return `${key}=${encodeURIComponent(data.value)}${attrs}`

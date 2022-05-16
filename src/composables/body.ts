@@ -4,14 +4,15 @@ import { contentTypes } from '../content-types'
 import { panic } from '../utils/panic'
 import { compressors, TBodyCompressor, uncompressBody } from '../utils/body'
 import { useRequest } from './req-res'
-import { URLSearchParams } from 'url'
 import { EHttpStatusCode, ProstoHttpError } from '..'
+import { ProstoURLSearchParams } from '../utils/url-search-params'
 
 type TBodyCache = { 
     parsed?: unknown
     isJson?: boolean
     isHtml?: boolean
     isText?: boolean
+    isBinary?: boolean
     isXml?: boolean
     isFormData?: boolean
     isUrlencoded?: boolean
@@ -56,6 +57,13 @@ export function useBody() {
         return cache.isText
     }
 
+    function isBinary() {
+        if (typeof cache.isBinary === 'undefined') {
+            cache.isBinary = contentIs(contentTypes.application.octetStream)
+        }
+        return cache.isBinary
+    }
+
     function isFormData() {
         if (typeof cache.isFormData === 'undefined') {
             cache.isFormData = contentIs('multipart/form-data')
@@ -94,6 +102,7 @@ export function useBody() {
             if (isJson()) { cache.parsed = jsonParser(body) }
             else if (isFormData()) { cache.parsed = formDataParser(body) }
             else if (isUrlencoded()) { cache.parsed = urlEncodedParser(body) }
+            else if (isBinary()) { cache.parsed = textParser(body) }
             else { cache.parsed = textParser(body) }
         }
         return cache.parsed as T
@@ -158,22 +167,8 @@ export function useBody() {
         return result
     }
 
-    function isArrayParam(name: string) {
-        return name.endsWith('[]')
-    }
-
     function urlEncodedParser(v: string): Record<string, unknown> {
-        const params = new URLSearchParams(v.trim())
-        const result: Record<string, unknown> = {}
-        for (const [key, value] of params.entries()) {
-            if (isArrayParam(key)) {
-                const a = result[key] = (result[key] || []) as string[]
-                a.push(value)
-            } else {
-                result[key] = value
-            }
-        }
-        return result
+        return new ProstoURLSearchParams(v.trim()).toJson()
     }
 
     return {
@@ -181,10 +176,12 @@ export function useBody() {
         isHtml,
         isXml,
         isText,
+        isBinary,
         isFormData,
         isUrlencoded,
         isCompressed,
         parseBody,
+        rawBody,
     }
 }
 

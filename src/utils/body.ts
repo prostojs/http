@@ -25,7 +25,7 @@ export async function compressBody(encodings: string[], body: string): Promise<s
 
 export async function uncompressBody(encodings: string[], body: string): Promise<string> {
     let newBody = body
-    for (const e of encodings) {
+    for (const e of encodings.reverse()) {
         if (!compressors[e]) {
             throw panic(`Usupported compression type "${e}".`)
         }

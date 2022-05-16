@@ -15,7 +15,7 @@ export class BaseHttpResponseRenderer<T = unknown> implements THttpResponseRende
             if (!response.getContentType()) response.setContentType(contentTypes.application.json)
             return JSON.stringify(response.body)
         }
-        throw panic('Unsupported body format ' + typeof response.body)
+        throw panic('Unsupported body format "' + typeof response.body + '"')
     }    
 }
 
