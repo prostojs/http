@@ -3,16 +3,8 @@ import { EHttpStatusCode } from '../status-codes'
 import { useCacheObject, useCurrentHttpContext } from './core'
 
 export function useRequest() {
-    const statusCache = useCacheObject<{ code: EHttpStatusCode }>('status')
     const bodyCache = useCacheObject<{ value: Promise<Buffer> }>('body')
     const { req, customContext } = useCurrentHttpContext()
-
-    function status(code?: EHttpStatusCode) {
-        if (code) {
-            statusCache.code = code
-        }
-        return statusCache.code
-    }
 
     async function rawBody() {
         if (typeof bodyCache.value === 'undefined') {
@@ -37,7 +29,6 @@ export function useRequest() {
         url: req.url,
         method: req.method,
         headers: req.headers,
-        status,
         rawBody,
         customContext,
     }
@@ -51,6 +42,14 @@ export function useResponse() {
     const cache = useCacheObject<{ responded: boolean }>('response')
     const res = useCurrentHttpContext().res
 
+    const statusCache = useCacheObject<{ code: EHttpStatusCode }>('status')
+    function status(code?: EHttpStatusCode) {
+        if (code) {
+            statusCache.code = code
+        }
+        return statusCache.code
+    }
+
     const rawResponse = (options?: TUseResponseOptions) => {
         if (!options || !options.passthrough) cache.responded = true
         return res
@@ -61,6 +60,7 @@ export function useResponse() {
     return {
         rawResponse,
         hasResponded,
+        status,
     }
 }
 

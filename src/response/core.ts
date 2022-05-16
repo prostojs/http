@@ -96,7 +96,7 @@ export class BaseHttpResponse<BodyType = unknown> {
     }
 
     protected mergeStatus(renderedBody: string) {
-        this.status = this.status || useRequest().status()
+        this.status = this.status || useResponse().status()
         if (!this.status) {
             const { method } = useRequest()
             this.status = renderedBody ? defaultStatus[method as 'GET'] || EHttpStatusCode.OK : EHttpStatusCode.NoContent
