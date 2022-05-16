@@ -21,24 +21,37 @@ export class ProstoHttpServer {
         }).bind(this)
     }
 
-    public listen(port: number): void
+    public listen(port: number): Promise<void>
 
-    public listen(port: number, cb: () => void): void
+    public listen(port: number, cb: () => void): Promise<void>
 
-    public listen(port: number, hostname: string): void
+    public listen(port: number, hostname: string): Promise<void>
 
-    public listen(port: number, hostname: string, cb: () => void): void
+    public listen(port: number, hostname: string, cb: () => void): Promise<void>
 
-    public listen(port: number, hostname?: string | (() => void) , cb?: () => void): void {
-        process.on('uncaughtException', this._uncoughtExceptionHandler)
-        this.server = createServer(
-            {
-                port,
-            },
-            this.processRequest.bind(this),
-            typeof hostname === 'string' ? hostname : '',
-            typeof hostname === 'function' ? hostname : cb,
-        )
+    public listen(port: number, hostname?: string | (() => void) , cb?: () => void): Promise<void> {
+        return new Promise((resolve, reject) => {
+            const myCb = () => {
+                const fn = typeof hostname === 'function' ? hostname : cb
+                process.on('uncaughtException', this._uncoughtExceptionHandler)
+                if (fn) { fn() }
+                this.server?.off('error', reject)
+                resolve()
+            }
+            try {
+                this.server = createServer(
+                    {
+                        port,
+                    },
+                    this.processRequest.bind(this),
+                    typeof hostname === 'string' ? hostname : '',
+                    myCb,
+                )
+                this.server?.on('error', reject)
+            } catch(e) {
+                reject(e)
+            }
+        })
     }
 
     public close() {

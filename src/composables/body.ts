@@ -89,11 +89,11 @@ export function useBody() {
         return cache.isCompressed
     }
 
-    function contentEncodings() {
+    function contentEncodings(): string[] {
         if (typeof cache.contentEncodings === 'undefined') {
             cache.contentEncodings = (contentEncoding || '').split(',').map(p => p.trim()).filter(p => !!p)
         }
-        return cache.contentEncodings
+        return cache.contentEncodings as unknown as string[]
     }
 
     async function parseBody<T = unknown>() {
@@ -180,6 +180,7 @@ export function useBody() {
         isFormData,
         isUrlencoded,
         isCompressed,
+        contentEncodings,
         parseBody,
         rawBody,
     }

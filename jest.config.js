@@ -16,4 +16,10 @@ module.exports = {
     ],
     watchPathIgnorePatterns: ['/node_modules/', '/dist/', '/.git/'],
     testEnvironment: "node",
+    globals: {
+      __DYE_RED_BRIGHT__: '',
+      __DYE_BOLD__: '',
+      __DYE_RESET__: '',
+      __VERSION__: 'JEST_TEST',
+    }
 }
