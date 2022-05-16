@@ -85,8 +85,12 @@ export class BaseHttpResponse<BodyType = unknown> {
 
     protected mergeHeaders() {
         const { headers } = useSetHeaders()
-        const { cookies } = useSetCookies()
-        const setCookie = [ ...(this._headers['Set-Cookie'] || []), ...cookies()]
+        const { cookies, removeCookie } = useSetCookies()
+        const newCookies  = (this._headers['Set-Cookie'] || [])
+        for (const cookie of newCookies) {
+            removeCookie(cookie.slice(0, cookie.indexOf('=')))
+        }
+        const setCookie = [ ...newCookies, ...cookies()]
         this._headers = {
             ...headers,
             ...this._headers,

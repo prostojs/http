@@ -1,6 +1,8 @@
-import { useBody, useCookies, useRouteParams, useSearchParams, useSetCookies } from './composables'
+import { useBody, useCookies, useHeaders, useResponse, useRouteParams, useSearchParams, useSetCookies, useSetHeaders } from './composables'
 import { ProstoHttpServer } from './server'
 import http, { IncomingMessage, OutgoingHttpHeaders } from 'http'
+import { BaseHttpResponse } from './response'
+import { stat } from 'fs'
 
 const PORT = 3043
 
@@ -21,6 +23,7 @@ const sendRequest = (method: string, path: string, body?: string): Promise<Incom
         const req = http.request('http://localhost:' + PORT.toString() + '/' + path,
             { method, headers },
             (res) => {
+                console.log(res.headers)
                 resolve(res)
             })
         if (body) {
@@ -54,6 +57,16 @@ async function getBody(path: string, postBody?: string): Promise<string> {
     }))
 }
 
+async function getHeader(path: string, headerName: string) {
+    const req = await get(path)
+    return req.headers[headerName]
+}
+
+async function getStatus(path: string) {
+    const req = await get(path)
+    return req.statusCode || 0
+}
+
 describe('prosto/http E2E', () => {
     const app = new ProstoHttpServer()
 
@@ -68,6 +81,18 @@ describe('prosto/http E2E', () => {
     app.get('/set-cookie', () => {
         const { setCookie } = useSetCookies()
         setCookie('my-cookie', 'test', { maxAge: '1d' })
+        return 'ok'
+    })
+    
+    app.get('/set-header', () => {
+        const { setHeader } = useSetHeaders()
+        setHeader('myHeader', 'value')
+        return 'ok'
+    })
+    
+    app.get('/set-status', () => {
+        const { status } = useResponse()
+        status(202)
         return 'ok'
     })
     
@@ -94,6 +119,20 @@ describe('prosto/http E2E', () => {
         const { parseBody } = useBody()
         return parseBody()
     })
+    
+    app.get('/overwrite', () => {
+        const response = new BaseHttpResponse()
+        const { status } = useResponse()
+        const { setCookie } = useSetCookies()
+        const { setHeader } = useSetHeaders()
+        status(201)
+        setCookie('myCookie', 'C Value', { maxAge: '2d' })
+        setHeader('myHeader', 'H Value')
+        response.setCookie('myCookie', 'New C Value', { expires: '2d' })
+        response.setHeader('myHeader', 'New H Value')
+        response.setStatus(205)
+        return response
+    })
 
     it('must reply in json', async () => {
         expect((await getBody('json'))).toEqual('{"a":"a","b":[1,2,3]}')
@@ -101,6 +140,14 @@ describe('prosto/http E2E', () => {
 
     it('must set cookie in response', async () => {
         expect((await get('set-cookie')).headers?.['set-cookie']).toEqual(['my-cookie=test; Max-Age=86400'])
+    })
+
+    it('must set header in response', async () => {
+        expect((await getHeader('set-header', 'myheader'))).toEqual('value')
+    })
+
+    it('must set status in response', async () => {
+        expect((await getStatus('set-status'))).toEqual(202)
     })
 
     it('must parse cookie', async () => {
@@ -132,6 +179,13 @@ describe('prosto/http E2E', () => {
         accept = 'application/json'
         expect((await getBody('post', JSON.stringify({a: 'a', b: [1, 2, 3]}))))
             .toEqual('{"a":"a","b":[1,2,3]}')
+    })
+
+    it('must overwrite header, cookie and status from response instance', async () => {
+        const res = await get('overwrite')
+        expect(res.headers['myheader']).toEqual('New H Value')
+        expect(res.statusCode).toEqual(205)
+        expect(res.headers['set-cookie']).toEqual(['myCookie=New%20C%20Value; Expires=2d'])
     })
 
     afterAll(async () => {
