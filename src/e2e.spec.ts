@@ -1,8 +1,7 @@
-import { useBody, useCookies, useHeaders, useResponse, useRouteParams, useSearchParams, useSetCookies, useSetHeaders } from './composables'
+import { useBody, useCookies, useResponse, useRouteParams, useSearchParams, useSetCookies, useSetHeaders } from './composables'
 import { ProstoHttpServer } from './server'
 import http, { IncomingMessage, OutgoingHttpHeaders } from 'http'
 import { BaseHttpResponse } from './response'
-import { stat } from 'fs'
 
 const PORT = 3043
 
