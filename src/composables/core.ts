@@ -36,5 +36,20 @@ export function useCacheObject<T = unknown>(name: TInnerCacheObjects): T {
 
 export function clearCacheObject(name: TInnerCacheObjects) {
     const cc = useCurrentHttpContext().customContext
-    cc['__' + name] = {}
+    const o = cc['__' + name]
+    switch (typeof o) {
+        case 'object':
+            if (Array.isArray(o)) {
+                o.splice(0, o.length)
+            } else {
+                for (const key in o) {
+                    delete o[key as keyof typeof o]
+                }
+            }
+            break
+        case 'string': 
+            cc['__' + name] = ''
+            break
+        default: cc['__' + name] = {}
+    }
 }

@@ -1,4 +1,4 @@
-import { convertTime } from './time'
+import { convertTime } from '../time'
 
 describe('time', () => {
     it('must convert milliseconds', () => {
