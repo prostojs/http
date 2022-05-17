@@ -2,12 +2,14 @@ import { TProstoParamsType } from '@prostojs/router'
 import { IncomingMessage, ServerResponse } from 'http'
 import { panic } from '../utils/panic'
 
-let currentHttpContext: {
+export interface TCurrentHttpContext {
     req: IncomingMessage
     res: ServerResponse
     params: TProstoParamsType
     customContext: THttpCustomContext
-} | null = null
+}
+
+let currentHttpContext: TCurrentHttpContext | null = null
 
 export type THttpCustomContext = Record<string, unknown>
 
@@ -24,6 +26,10 @@ export function useCurrentHttpContext() {
         throw panic('Use HTTP hooks only synchronously within the runtime of the request.')
     }
     return currentHttpContext
+}
+
+export function restoreCurrentHttpContex(ctx: TCurrentHttpContext) {
+    setCurrentHttpContext(ctx.req, ctx.res, ctx.params, ctx.customContext)
 }
 
 type TInnerCacheObjects = 'searchParams' | 'cookies' | 'accept' | 'authorization' | 'setHeader' | 'setCookies' | 'status' | 'response' | 'body'

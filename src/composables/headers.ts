@@ -13,13 +13,23 @@ export function useSetHeaders() {
         cache[name] = value.toString()
     }
 
+    function removeHeader(name: string) {
+        delete cache[name]
+    }
+
     function setContentType(value: string) {
         setHeader('Content-Type', value)
     }
 
+    function enableCors(origin: string = '*') {
+        setHeader('Access-Control-Allow-Origin', origin)
+    }
+
     return {
         setHeader,
+        removeHeader,
         setContentType,
         headers: cache,
+        enableCors,
     }
 }

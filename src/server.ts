@@ -102,24 +102,23 @@ export class ProstoHttpServer {
     }
 
     protected async processHandlers(req: IncomingMessage, res: ServerResponse, found: TProstoLookupResult<TProstoHttpHandler>, setContext: () => void, clearContext: () => void) {
-        const params = found.ctx.params
         for (const [i, handler] of found.route.handlers.entries()) {
             const last = found.route.handlers.length === i + 1
             try {
                 setContext()
-                const promise = handler(params)
+                const promise = handler()
                 clearContext()
                 const result = await promise
                 if (!last && result instanceof Error) continue
                 setContext()
-                createResponseFrom(result)?.respond()
+                await (createResponseFrom(result)?.respond() || Promise.resolve())
                 clearContext()
                 break
             } catch (e) {
                 this.printError('Uncought route handler exception: ' + (req.url || '') + '\n', e as Error)
                 if (last) {
                     setContext()
-                    createResponseFrom(e)?.respond()
+                    await (createResponseFrom(e)?.respond() || Promise.resolve())
                     clearContext()
                 }
             }
@@ -133,27 +132,27 @@ export class ProstoHttpServer {
         }
     }
 
-    get<ResType = unknown, ParamsType = TProstoParamsType>(path: string, handler: TProstoHttpHandler<ResType, ParamsType>) {
+    get<ResType = unknown, ParamsType = TProstoParamsType>(path: string, handler: TProstoHttpHandler<ResType>) {
         return this.router.on<ParamsType, TProstoHttpHandler>('GET', path, handler)
     }
 
-    post<ResType = unknown, ParamsType = TProstoParamsType>(path: string, handler: TProstoHttpHandler<ResType, ParamsType>) {
+    post<ResType = unknown, ParamsType = TProstoParamsType>(path: string, handler: TProstoHttpHandler<ResType>) {
         return this.router.on<ParamsType, TProstoHttpHandler>('POST', path, handler)
     }
 
-    put<ResType = unknown, ParamsType = TProstoParamsType>(path: string, handler: TProstoHttpHandler<ResType, ParamsType>) {
+    put<ResType = unknown, ParamsType = TProstoParamsType>(path: string, handler: TProstoHttpHandler<ResType>) {
         return this.router.on<ParamsType, TProstoHttpHandler>('PUT', path, handler)
     }
 
-    delete<ResType = unknown, ParamsType = TProstoParamsType>(path: string, handler: TProstoHttpHandler<ResType, ParamsType>) {
+    delete<ResType = unknown, ParamsType = TProstoParamsType>(path: string, handler: TProstoHttpHandler<ResType>) {
         return this.router.on<ParamsType, TProstoHttpHandler>('DELETE', path, handler)
     }
 
-    patch<ResType = unknown, ParamsType = TProstoParamsType>(path: string, handler: TProstoHttpHandler<ResType, ParamsType>) {
+    patch<ResType = unknown, ParamsType = TProstoParamsType>(path: string, handler: TProstoHttpHandler<ResType>) {
         return this.router.on<ParamsType, TProstoHttpHandler>('PATCH', path, handler)
     }
 
-    on<ResType = unknown, ParamsType = TProstoParamsType>(method: THttpMethod | '*', path: string, handler: TProstoHttpHandler<ResType, ParamsType>) {
+    on<ResType = unknown, ParamsType = TProstoParamsType>(method: THttpMethod | '*', path: string, handler: TProstoHttpHandler<ResType>) {
         return this.router.on<ParamsType, TProstoHttpHandler>(method, path, handler)
     }
 }

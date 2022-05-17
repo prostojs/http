@@ -58,6 +58,11 @@ export class BaseHttpResponse<BodyType = unknown> {
         return this
     }
 
+    enableCors(origin: string = '*') {
+        this._headers['Access-Control-Allow-Origin'] = origin
+        return this
+    }
+
     setCookie(name: string, value: string, attrs?: Partial<TCookieAttributes>) {
         const cookies = this._headers['Set-Cookie'] = (this._headers['Set-Cookie'] || []) as string[]
         cookies.push(renderCookie(name, { value, attrs: attrs || {} }))
