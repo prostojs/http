@@ -111,14 +111,14 @@ export class ProstoHttpServer {
                 const result = await promise
                 if (!last && result instanceof Error) continue
                 setContext()
-                await (createResponseFrom(result)?.respond() || Promise.resolve())
+                createResponseFrom(result)?.respond()
                 clearContext()
                 break
             } catch (e) {
                 this.printError('Uncought route handler exception: ' + (req.url || '') + '\n', e as Error)
                 if (last) {
                     setContext()
-                    await (createResponseFrom(e)?.respond() || Promise.resolve())
+                    createResponseFrom(e)?.respond()
                     clearContext()
                 }
             }

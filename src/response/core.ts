@@ -3,6 +3,7 @@ import { useRequest, useResponse, useSetHeaders, useSetCookies } from '../compos
 import { EHttpStatusCode } from '../status-codes'
 import { panic } from '../utils/panic'
 import { renderCookie, TCookieAttributes } from '../utils/set-cookie'
+import { Readable } from 'stream'
 
 const defaultStatus: Record<string, EHttpStatusCode> = {
     GET: EHttpStatusCode.OK,
@@ -119,13 +120,29 @@ export class BaseHttpResponse<BodyType = unknown> {
             throw panic('The response was already sent.')
         }
         this.mergeHeaders()
-        const renderedBody = this.renderer.render(this)
-        this.mergeStatus(renderedBody)
         const res = rawResponse()
-        res.writeHead(this.status, {
-            'Content-Length': Buffer.byteLength(renderedBody),
-            ...this._headers,
-        }).end(renderedBody)
+        if (this.body instanceof Readable) {
+            const stream = this.body
+            this.mergeStatus('ok')
+            res.writeHead(this.status, {
+                ...this._headers,
+            })
+            stream.on('error', (err) => {
+                stream.destroy()
+                res.end()
+            })
+            stream.on('close', () => {
+                stream.destroy()
+            })
+            stream.pipe(res)
+        } else {
+            const renderedBody = this.renderer.render(this)
+            this.mergeStatus(renderedBody)
+            res.writeHead(this.status, {
+                'Content-Length': Buffer.byteLength(renderedBody),
+                ...this._headers,
+            }).end(renderedBody)
+        }
     }
 }
 
