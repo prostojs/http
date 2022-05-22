@@ -7,7 +7,7 @@ It utilizes such a technique as you can see in React Hooks or Vue Composables. I
 
 The main ideas behind this http-server implementation are:
 
-1. Never mutate request object (`req`) and accumulate a request context in a separate object instead;
+1. Never mutate request object (`req`). Accumulate a request context in a separate object(s) instead;
 2. Never parse anything (cookies, body) before it is really requested by the request handler;
 3. Get rid of complex predefined data objects containing everything (cookies, headers, body, parsed body etc.) and use composable functions instead;
 4. Get rid of tons of dependencies (middlewares) and implement everything that is needed for http server in a simple way.
@@ -356,6 +356,31 @@ app.get('static/*', () => {
 app.get('static/*', () => {
     // this handler will be called every time the file is not found
     return 'Here\'s my fallback response'
+})
+
+app.listen(3000)
+```
+
+In order to prevent the fallback to be invoked you must return an Error Instance explicitly:
+
+```js
+import { ProstoHttpServer, serveFile, useRouteParams } from '@prostojs/http'
+const app = new ProstoHttpServer()
+
+app.get('static/*', () => {
+    const { getRouteParam } = useRouteParams()
+    try {
+        return serveFile(getRouteParam('*'), { maxAge: '10m' })
+    }
+    catch (e) {
+        // now we catch error and return it explicitly
+        return e
+    }
+})
+
+app.get('static/*', () => {
+    // this handler will be never called now
+    return 'Here\'s my fallback response which is never (ever) called'
 })
 
 app.listen(3000)

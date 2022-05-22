@@ -109,7 +109,8 @@ export class ProstoHttpServer {
                 const promise = handler()
                 clearContext()
                 const result = await promise
-                if (!last && result instanceof Error) continue
+                // even if the returned value is an Error instance
+                // we still want to process it as a response
                 setContext()
                 createResponseFrom(result)?.respond()
                 clearContext()
