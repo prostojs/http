@@ -33,8 +33,7 @@
     ]
   },
   "dependencies": {
-    "@prostojs/router": "^0.0.11",
-    "reflect-metadata": "^0.1.13"
+    "@prostojs/router": "^0.0.11"
   },
   "gitHooks": {
     "commit-msg": "node scripts/verifyCommit.js"

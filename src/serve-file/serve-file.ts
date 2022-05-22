@@ -21,7 +21,7 @@ export function statFile(path: string) {
     return stat(path)
 }
 
-export async function ServeFile(filePath: string, options: TServeFileOptions = {}): Promise<Readable | string> {
+export async function serveFile(filePath: string, options: TServeFileOptions = {}): Promise<Readable | string> {
     const ctx = useCurrentHttpContext()
 
     const normalizedPath = path.normalize(
@@ -45,7 +45,7 @@ export async function ServeFile(filePath: string, options: TServeFileOptions = {
     restoreCurrentHttpContex(ctx)
 
     const { status } = useResponse()
-    const { setHeader, headers: headers2 } = useSetHeaders()
+    const { setHeader } = useSetHeaders()
     const headers = useHeaders()
     const { method } = useRequest()
 
