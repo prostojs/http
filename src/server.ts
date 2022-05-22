@@ -133,6 +133,7 @@ export class ProstoHttpServer {
     }
 
     get<ResType = unknown, ParamsType = TProstoParamsType>(path: string, handler: TProstoHttpHandler<ResType>) {
+        this.router.on<ParamsType, TProstoHttpHandler>('HEAD', path, handler)
         return this.router.on<ParamsType, TProstoHttpHandler>('GET', path, handler)
     }
 

@@ -100,7 +100,9 @@ export class BaseHttpResponse<BodyType = unknown> {
         this._headers = {
             ...headers,
             ...this._headers,
-            'Set-Cookie': setCookie,
+        }
+        if (setCookie && setCookie.length) {
+            this._headers['Set-Cookie'] = setCookie
         }
         return this
     }
@@ -116,6 +118,7 @@ export class BaseHttpResponse<BodyType = unknown> {
 
     respond() {
         const { rawResponse, hasResponded } = useResponse()
+        const { method } = useRequest()
         if (hasResponded()) {
             throw panic('The response was already sent.')
         }
@@ -127,21 +130,26 @@ export class BaseHttpResponse<BodyType = unknown> {
             res.writeHead(this.status, {
                 ...this._headers,
             })
-            stream.on('error', (err) => {
+            if (method === 'HEAD') {
                 stream.destroy()
                 res.end()
-            })
-            stream.on('close', () => {
-                stream.destroy()
-            })
-            stream.pipe(res)
+            } else {
+                stream.on('error', (err) => {
+                    stream.destroy()
+                    res.end()
+                })
+                stream.on('close', () => {
+                    stream.destroy()
+                })
+                stream.pipe(res)
+            }
         } else {
             const renderedBody = this.renderer.render(this)
             this.mergeStatus(renderedBody)
             res.writeHead(this.status, {
                 'Content-Length': Buffer.byteLength(renderedBody),
                 ...this._headers,
-            }).end(renderedBody)
+            }).end(method !== 'HEAD' ? renderedBody : '')
         }
     }
 }
