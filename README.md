@@ -5,6 +5,13 @@ It utilizes such a technique as you can see in React Hooks or Vue Composables. I
 
 `@prostojs/http` supports cookie parsing and serving files out of the box with no impact on performance.
 
+The main ideas behind this http-server implementation are:
+
+1. Never mutate request object (`req`) and accumulate a request context in a separate object instead;
+2. Never parse anything (cookies, body) before it is really requested by the request handler;
+3. Get rid of complex predefined data objects containing everything (cookies, headers, body, parsed body etc.) and use composable functions instead;
+4. Get rid of tons of dependencies (middlewares) and implement everything that is needed for http server in a simple way.
+
 
 ## Quick Start
 
@@ -16,6 +23,8 @@ const app = new ProstoHttpServer()
 app.get('test', () => {
     return { message: 'hello world!' }
 })
+
+app.listen(3000, () => { console.log('@prosto/http Server is up on port 3000') })
 ```
 
 ## Install
@@ -202,7 +211,7 @@ A function `useSetHeaders` provides variety of response headers helpers:
 import { useSetHeaders, contentTypes } from '@prostojs/http'
 app.get('test', async () => {
     const {
-        setHeader,      //sets hader: (name: string, value: string | number) => void;
+        setHeader,      //sets header: (name: string, value: string | number) => void;
         removeHeader,   //removes header: (name: string) => void;
         setContentType, //sets "Content-Type": (value: string) => void;
         headers,        //Object with response headers: Record<string, string>;
@@ -335,7 +344,8 @@ If the previous handler returns an Error Instance then the fallback handler won'
 For example you serve files, but for some 'not found' files you want to do something else:
 
 ```js
-import { serveFile, useRouteParams } from '@prostojs/http'
+import { ProstoHttpServer, serveFile, useRouteParams } from '@prostojs/http'
+const app = new ProstoHttpServer()
 
 app.get('static/*', () => {
     const { getRouteParam } = useRouteParams()
@@ -347,4 +357,6 @@ app.get('static/*', () => {
     // this handler will be called every time the file is not found
     return 'Here\'s my fallback response'
 })
+
+app.listen(3000)
 ```
