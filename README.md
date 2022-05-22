@@ -50,6 +50,11 @@ Wildcard route:
 app.get('wildcard/*', () => {})
 ```
 
+Complex wildcard route (use as many asterisks as you need and even specify a static parts after them):
+```js
+app.get('wildcard/start-*/*.html', () => {})
+```
+
 
 ## URL Parameters
 
@@ -173,6 +178,34 @@ app.post('test', async () => {
 
     // after `await parseBody()` the body was loaded and parsed
     // ...
+})
+```
+
+### Request Authorization
+
+`useAuthorization` function provides useful helpers for auth-headers:
+
+```js
+import { useAuthorization } from '@prostojs/http'
+app.get('test', async () => {
+    const {
+        authorization,      // the raw value of "authorization" header : string
+        authType,           // the auth type (Bearer/Basic) : string
+        authRawCredentials, // the auth credentials that follow auth type : string
+        isBasic,            // true if authType === 'Basic' : () => boolean
+        isBearer,           // true if authType === 'Bearer' : () => boolean
+        basicCredentials,   // parsed basic auth credentials : () => { username: string, password: string }
+    } = useAuthorization()
+
+    if (isBasic()) {
+        const { username, password } = basicCredentials()
+        console.log({ username, password })
+    } else if (isBearer()) {
+        const token = authRawCredentials
+        console.log({ token })
+    } else {
+        // unknown or empty authorization header
+    }
 })
 ```
 
