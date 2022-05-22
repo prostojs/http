@@ -1,3 +1,12 @@
+## [0.0.1-alpha.2](https://github.com/prostojs/http/compare/v0.0.1-alpha.1...v0.0.1-alpha.2) (2022-05-22)
+
+
+### Bug Fixes
+
+* **handlers:** skip fallbacks when error returned ([f647064](https://github.com/prostojs/http/commit/f647064d15b09f8e6d63b187ddf08e48c08aabb6))
+
+
+
 ## [0.0.1-alpha.1](https://github.com/prostojs/http/compare/v0.0.1-alpha.0...v0.0.1-alpha.1) (2022-05-22)
 
 
