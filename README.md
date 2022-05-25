@@ -300,7 +300,33 @@ app.get('test', async () => {
 
 ### Cache-Control
 
-_WIP_
+`useSetCacheControl` function provides helpers for headers responsible for cache control
+
+```js
+import { useSetCacheControl } from '@prostojs/http'
+app.get('static/*', () => {
+    const { 
+        setAge,             // sets Age (v: number | TProstoTimeMultiString) => void
+        setExpires,         // sets Expires (v: Date | string | number) => void
+        setPragmaNoCache,   // sets Pragma: no-cache (v: boolean) => void
+        setCacheControl,    // sets Cache-Control (data: TCacheControl) => void
+    } = useSetCacheControl()
+
+    setAge('2h 15m')
+    setExpires('2022-05-05')
+    setCacheControl({
+        mustRevalidate: true,
+        noCache: false,
+        noStore: false,
+        noTransform: true,
+        public: true,
+        private: 'field',
+        proxyRevalidate: true,
+        maxAge: '3h 30m 12s',
+        sMaxage: '2h 27m 54s',
+    })
+})
+```
 
 ### Serve File (Serve-Static)
 
@@ -317,6 +343,8 @@ app.get('static/*', () => {
     return serveFile(getRouteParam('*'), { cacheControl: { maxAge: '10m' } })
 })
 ```
+
+`cacheControl` here is the same object as used in `useSetCacheControl().setCacheControl({ ... })`
 
 ## Error Handling
 
