@@ -13,6 +13,17 @@ let currentHttpContext: TCurrentHttpContext | null = null
 
 export type THttpCustomContext = Record<string, unknown>
 
+export function useCurrentHttpContext() {
+    if (!currentHttpContext) {
+        throw panic('Use HTTP hooks only synchronously within the runtime of the request.')
+    }
+    const cc = currentHttpContext
+    return {
+        getCtx: () => cc,
+        restoreCtx: () => setCurrentHttpContext(cc.req, cc.res, cc.params, cc.customContext),
+    }
+}
+
 export function clearCurrentHttpContext() {
     currentHttpContext = null
 }
@@ -21,27 +32,16 @@ export function setCurrentHttpContext(req: IncomingMessage, res: ServerResponse,
     currentHttpContext = { req, res, params, customContext }
 }
 
-export function useCurrentHttpContext() {
-    if (!currentHttpContext) {
-        throw panic('Use HTTP hooks only synchronously within the runtime of the request.')
-    }
-    return currentHttpContext
-}
-
-export function restoreCurrentHttpContex(ctx: TCurrentHttpContext) {
-    setCurrentHttpContext(ctx.req, ctx.res, ctx.params, ctx.customContext)
-}
-
 type TInnerCacheObjects = 'searchParams' | 'cookies' | 'accept' | 'authorization' | 'setHeader' | 'setCookies' | 'status' | 'response' | 'body'
 
 export function useCacheObject<T = unknown>(name: TInnerCacheObjects): T {
-    const cc = useCurrentHttpContext().customContext
+    const cc = useCurrentHttpContext().getCtx().customContext
     const cache = cc['__' + name] = (cc['__' + name] || {}) as T
     return cache
 }
 
 export function clearCacheObject(name: TInnerCacheObjects) {
-    const cc = useCurrentHttpContext().customContext
+    const cc = useCurrentHttpContext().getCtx().customContext
     const o = cc['__' + name]
     switch (typeof o) {
         case 'object':

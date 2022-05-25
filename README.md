@@ -314,7 +314,7 @@ Built-in file server example:
 import { serveFile, useRouteParams } from '@prostojs/http'
 app.get('static/*', () => {
     const { getRouteParam } = useRouteParams()
-    return serveFile(getRouteParam('*'), { maxAge: '10m' })
+    return serveFile(getRouteParam('*'), { cacheControl: { maxAge: '10m' } })
 })
 ```
 

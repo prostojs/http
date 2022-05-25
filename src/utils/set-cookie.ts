@@ -28,7 +28,7 @@ export function renderCookie(key: string, data: TSetCookieData) {
 }
 
 const cookieAttrFunc = {
-    expires: (v: TCookieAttributes['expires']) => 'Expires=' + (typeof v === 'string' ? v : typeof v === 'number' ? new Date(v).toUTCString() : v.toUTCString()),
+    expires: (v: TCookieAttributes['expires']) => 'Expires=' + (typeof v === 'string' || typeof v === 'number' ? new Date(v).toUTCString() : v.toUTCString()),
     maxAge: (v: TCookieAttributes['maxAge']) => 'Max-Age=' + convertTime(v, 's').toString(),
     domain: (v: TCookieAttributes['domain']) => 'Domain=' + v,
     path: (v: TCookieAttributes['path']) => 'Path=' + v,

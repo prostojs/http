@@ -5,7 +5,7 @@ describe('set-cookie', () => {
         expect(renderCookie('cookie-key', { value: 'cookie-value', attrs: {} })).toEqual('cookie-key=cookie-value')
     })
     it('must set "expires"', () => {
-        expect(renderCookie('cookie-key', { value: 'cookie-value', attrs: { expires: '15s' } })).toEqual('cookie-key=cookie-value; Expires=15s')
+        expect(renderCookie('cookie-key', { value: 'cookie-value', attrs: { expires: '2020-02-02' } })).toEqual('cookie-key=cookie-value; Expires=Sun, 02 Feb 2020 00:00:00 GMT')
     })
     it('must set "maxAge"', () => {
         expect(renderCookie('cookie-key', { value: 'cookie-value', attrs: { maxAge: '15m' } })).toEqual('cookie-key=cookie-value; Max-Age=900')

@@ -1,4 +1,4 @@
-import { restoreCurrentHttpContex, useCurrentHttpContext } from '../composables/core'
+import { useCurrentHttpContext } from '../composables/core'
 import { ProstoHttpError } from '../errors'
 import { createResponseFrom } from '../response'
 import { TProstoHttpHandler } from '../types'
@@ -9,11 +9,11 @@ export type TGuardDecoratedFunction = (handler: TProstoHttpHandler) => TProstoHt
 export function toGuard(...guardFns: TGuardFunction[]): TGuardDecoratedFunction {
     const guardDecorator = (handler: TProstoHttpHandler) => {
         const newHandler = async () => {
-            const currentContext = useCurrentHttpContext()
+            const { restoreCtx } = useCurrentHttpContext()
             try {
                 for (const guardFn of guardFns) {
                     const authorized = await guardFn()
-                    restoreCurrentHttpContex(currentContext)
+                    restoreCtx()
                     if (!authorized) {
                         return createResponseFrom(new ProstoHttpError(401))
                     }
@@ -21,7 +21,7 @@ export function toGuard(...guardFns: TGuardFunction[]): TGuardDecoratedFunction 
             } catch(e) {
                 return createResponseFrom(e)
             }
-            restoreCurrentHttpContex(currentContext)
+            restoreCtx()
             return await handler()
         }
         return newHandler

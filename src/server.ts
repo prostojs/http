@@ -1,7 +1,7 @@
 import { ProstoRouter, THttpMethod, TProstoLookupResult, TProstoParamsType } from '@prostojs/router'
 import { IncomingMessage, Server, ServerResponse } from 'http'
 import { ProstoHttpError } from '.'
-import { clearCurrentHttpContext, setCurrentHttpContext, THttpCustomContext } from './composables/core'
+import { clearCurrentHttpContext, setCurrentHttpContext, THttpCustomContext, useCurrentHttpContext } from './composables/core'
 import { createServer } from './http'
 import { createResponseFrom } from './response'
 import { TProstoHttpHandler, TProstoServerOptions } from './types'
@@ -73,21 +73,17 @@ export class ProstoHttpServer {
         }
         if (found) {
             const params = found.ctx.params
-            function setContext() {
-                setCurrentHttpContext(req, res, params, ctx)
-            }
-            function clearContext() {
-                clearCurrentHttpContext()
-            }
-            this.processHandlers(req, res, found, setContext, clearContext)
+            setCurrentHttpContext(req, res, params, ctx)
+            const { restoreCtx } = useCurrentHttpContext()
+            this.processHandlers(req, res, found)
                 // .then(() => {
                 //     console.log('ok')
                 // })
                 .catch((e) => {
                     this.printError('Internal error, please report: ', e as Error)
-                    setContext()
+                    restoreCtx()
                     createResponseFrom(e)?.respond()
-                    clearContext()
+                    clearCurrentHttpContext()
                     console.error(e)
                 })
                 // .finally(() => {
@@ -101,26 +97,27 @@ export class ProstoHttpServer {
         }
     }
 
-    protected async processHandlers(req: IncomingMessage, res: ServerResponse, found: TProstoLookupResult<TProstoHttpHandler>, setContext: () => void, clearContext: () => void) {
+    protected async processHandlers(req: IncomingMessage, res: ServerResponse, found: TProstoLookupResult<TProstoHttpHandler>) {
+        const { restoreCtx } = useCurrentHttpContext()
         for (const [i, handler] of found.route.handlers.entries()) {
             const last = found.route.handlers.length === i + 1
             try {
-                setContext()
+                restoreCtx()
                 const promise = handler()
-                clearContext()
+                clearCurrentHttpContext()
                 const result = await promise
                 // even if the returned value is an Error instance
                 // we still want to process it as a response
-                setContext()
+                restoreCtx()
                 createResponseFrom(result)?.respond()
-                clearContext()
+                clearCurrentHttpContext()
                 break
             } catch (e) {
                 this.printError('Uncought route handler exception: ' + (req.url || '') + '\n', e as Error)
                 if (last) {
-                    setContext()
+                    restoreCtx()
                     createResponseFrom(e)?.respond()
-                    clearContext()
+                    clearCurrentHttpContext()
                 }
             }
         }

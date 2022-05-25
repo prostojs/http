@@ -9,7 +9,7 @@ describe('composables/core', () => {
     setCurrentHttpContext(req, res, {}, cache)
 
     it('must set current http context and read it when useCurrentHttpContext', () => {
-        const ctx = useCurrentHttpContext()
+        const ctx = useCurrentHttpContext().getCtx()
         expect(ctx.req).toBe(req)
         expect(ctx.res).toBe(res)
     })

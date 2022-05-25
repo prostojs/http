@@ -4,7 +4,7 @@ import { useCacheObject, useCurrentHttpContext } from './core'
 
 export function useRequest() {
     const bodyCache = useCacheObject<{ value: Promise<Buffer> }>('body')
-    const { req, customContext } = useCurrentHttpContext()
+    const { req, customContext } = useCurrentHttpContext().getCtx()
 
     async function rawBody() {
         if (typeof bodyCache.value === 'undefined') {
@@ -40,7 +40,7 @@ type TUseResponseOptions = {
 
 export function useResponse() {
     const cache = useCacheObject<{ responded: boolean }>('response')
-    const res = useCurrentHttpContext().res
+    const res = useCurrentHttpContext().getCtx().res
 
     const statusCache = useCacheObject<{ code: EHttpStatusCode }>('status')
     function status(code?: EHttpStatusCode) {
@@ -65,7 +65,7 @@ export function useResponse() {
 }
 
 export function useRouteParams<T extends TProstoParamsType = TProstoParamsType>() {
-    const routeParams = useCurrentHttpContext().params as T
+    const routeParams = useCurrentHttpContext().getCtx().params as T
 
     function getRouteParam<T2 extends string | string[] | undefined = string | string[] | undefined>(name: string) {
         return routeParams[name] as T2

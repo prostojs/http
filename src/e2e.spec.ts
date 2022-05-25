@@ -127,7 +127,7 @@ describe('prosto/http E2E', () => {
         status(201)
         setCookie('myCookie', 'C Value', { maxAge: '2d' })
         setHeader('myHeader', 'H Value')
-        response.setCookie('myCookie', 'New C Value', { expires: '2d' })
+        response.setCookie('myCookie', 'New C Value', { expires: '2021-03-04' })
         response.setHeader('myHeader', 'New H Value')
         response.setStatus(205)
         return response
@@ -184,7 +184,7 @@ describe('prosto/http E2E', () => {
         const res = await get('overwrite')
         expect(res.headers['myheader']).toEqual('New H Value')
         expect(res.statusCode).toEqual(205)
-        expect(res.headers['set-cookie']).toEqual(['myCookie=New%20C%20Value; Expires=2d'])
+        expect(res.headers['set-cookie']).toEqual(['myCookie=New%20C%20Value; Expires=Thu, 04 Mar 2021 00:00:00 GMT'])
     })
 
     afterAll(async () => {

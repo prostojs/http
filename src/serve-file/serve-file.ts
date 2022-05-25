@@ -1,30 +1,40 @@
 import { useHeaders, useRequest, useResponse, useSetHeaders } from '../composables'
-import { TCookieAttributes } from '../utils/set-cookie'
 
 import { promises as fsPromises, createReadStream, Stats } from 'fs'
-const { stat } = fsPromises
+const { stat, readdir } = fsPromises
 import path from 'path'
-import { convertTime } from '../utils/time'
 import { getMimeType } from '../mime'
-import { restoreCurrentHttpContex, useCurrentHttpContext } from '../composables/core'
 import { ProstoHttpError } from '../errors'
 import { Readable } from 'stream'
+import { TCacheControl } from '../utils/cache-control'
+import { useSetCacheControl } from '../composables/header-set-cache-control'
+import { useCurrentHttpContext } from '../composables/core'
+import { BaseHttpResponse } from '../response'
 
 interface TServeFileOptions {
     headers?: Record<string, string>
-    maxAge?: TCookieAttributes['maxAge']
+    cacheControl?: TCacheControl
+    expires?: Date | string | number
+    pragmaNoCache?: boolean
     baseDir?: string
     defaultExt?: string
+    listDirectory?: boolean
+    index?: string
 }
 
 export function statFile(path: string) {
     return stat(path)
 }
 
-export async function serveFile(filePath: string, options: TServeFileOptions = {}): Promise<Readable | string> {
-    const ctx = useCurrentHttpContext()
+export async function serveFile(filePath: string, options: TServeFileOptions = {}): Promise<Readable | string | BaseHttpResponse | string[] | unknown> {
+    const { restoreCtx } = useCurrentHttpContext()
+    const { status } = useResponse()
+    const { setHeader, removeHeader } = useSetHeaders()
+    const headers = useHeaders()
+    const { method, url } = useRequest()
+    const { setCacheControl, setExpires, setPragmaNoCache } = useSetCacheControl()
 
-    const normalizedPath = path.normalize(
+    const normalizedPath: string = path.normalize(
         path.join(
             process.cwd(),
             options.baseDir || '',
@@ -35,19 +45,15 @@ export async function serveFile(filePath: string, options: TServeFileOptions = {
     try {    
         fileStats = await stat(normalizedPath)
     } catch (e) {
+        if (options.defaultExt) {
+            const ext = path.extname(filePath)
+            if (!ext) {
+                restoreCtx()
+                return serveFile(filePath + '.' + options.defaultExt)
+            }
+        }
         throw new ProstoHttpError(404)
     }
-    if (fileStats.isDirectory()) {
-        // TODO: handle directory
-        throw new ProstoHttpError(404)
-    }
-
-    restoreCurrentHttpContex(ctx)
-
-    const { status } = useResponse()
-    const { setHeader } = useSetHeaders()
-    const headers = useHeaders()
-    const { method } = useRequest()
 
     status(200)
 
@@ -60,6 +66,37 @@ export async function serveFile(filePath: string, options: TServeFileOptions = {
         return ''
     }
     // if-none-match & if-modified-since processing end
+    
+    setHeader('etag', etag)
+    setHeader('Last-Modified', lastModified.toUTCString())    
+    if (options.cacheControl !== undefined) {
+        setCacheControl(options.cacheControl)
+    }
+    if (options.expires) {
+        setExpires(options.expires)
+    }
+    if (options.pragmaNoCache) {
+        setPragmaNoCache(options.pragmaNoCache)
+    }
+    
+    if (fileStats.isDirectory()) {
+        if (options.listDirectory) {
+            restoreCtx()
+            return listDirectory(normalizedPath)
+        } else if (options.index) {
+            if (filePath[filePath.length - 1] !== '/' && url && url[url.length - 1] !== '/') {
+                return new BaseHttpResponse().setStatus(302).setHeader('Location', url + '/')
+            }
+            restoreCtx()
+            return serveFile(path.join(filePath, options.index), {
+                ...options,
+                index: '',
+            }) 
+        }
+        removeHeader('etag')
+        removeHeader('Last-Modified')
+        throw new ProstoHttpError(404)
+    }
 
     // range header processing start
     let range = headers.range
@@ -100,12 +137,6 @@ export async function serveFile(filePath: string, options: TServeFileOptions = {
     // range header processing end
 
     setHeader('Accept-Ranges', 'bytes')
-    setHeader('etag', etag)
-    setHeader('Last-Modified', lastModified.toUTCString())
-
-    if (options.maxAge !== undefined) {
-        setHeader('Cache-Control', 'public, max-age=' + convertTime(options.maxAge, 's').toString())
-    }
 
     setHeader('Content-Type', getMimeType(normalizedPath) || 'application/octet-stream')
     setHeader('Content-Length', size)
@@ -150,3 +181,36 @@ function isNotModified(etag: string, lastModified: Date, clientEtag: string, cli
     return false
 }
 
+async function listDirectory(dirPath: string) {
+    const { setContentType } = useSetHeaders()
+    const { url } = useRequest()
+    const list = await readdir(dirPath)
+    const promises = []
+    let detailedList = []
+    for (const item of list) {
+        promises.push({ name: item, promise: stat(path.join(dirPath, item)) })
+    }
+    for (const item of promises) {
+        const data = await item.promise
+        detailedList.push({
+            name: item.name, size: data.size, mtime: data.mtime, dir: data.isDirectory(),
+        })
+    }
+    detailedList = detailedList.sort((a, b) => a.dir === b.dir ? a.name > b.name ? 1 : -1 : a.dir > b.dir ? -1 : 1)
+    detailedList.unshift({ name: '..', dir: true } as { name: string, size: number, mtime: Date, dir: boolean })
+    setContentType('text/html')
+    const styles = '<style type="text/css">\nhtml { font-family: monospace }\n' +
+    'span { padding: 0px 2px }\n' +
+    '.text { text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }\n' +
+    '.icon { width: 20px; display: inline-block; text-align: center; }\n' +
+    '.name { width: 250px; display: inline-block; }\n' +
+    '.size { width: 80px; display: inline-block; color: grey; text-align: right; }\n' +
+    '.date { width: 200px; display: inline-block; color: grey; text-align: right; }\n' +
+    '\n</style>'
+    return '<html><head><title>Dir</title> ' + styles + ' </head><body><ul>' + 
+            detailedList.map(d => `<li> <span class="icon">${ d.dir ? '&#128193;' : '&#128462;' }</span>` +
+                `<a href="${ path.join(url || '', d.name) }"><span class="name text">${ d.name }</span></a>` +
+                `<span class="size text">${ d.size && (d.size > 10000 ? (Math.round(d.size / 1024 / 1024).toString() + 'Mb') : (Math.round(d.size / 1024).toString() + 'Kb')) || '' }</span>` +
+                `<span class="date text">${ d.mtime && d.mtime.toISOString() || '' }</li>`).join('\n') + 
+            '</ul></body></html>'
+}

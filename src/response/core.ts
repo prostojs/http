@@ -4,6 +4,7 @@ import { EHttpStatusCode } from '../status-codes'
 import { panic } from '../utils/panic'
 import { renderCookie, TCookieAttributes } from '../utils/set-cookie'
 import { Readable } from 'stream'
+import { renderCacheControl, TCacheControl } from '../utils/cache-control'
 
 const defaultStatus: Record<string, EHttpStatusCode> = {
     GET: EHttpStatusCode.OK,
@@ -70,6 +71,10 @@ export class BaseHttpResponse<BodyType = unknown> {
         return this
     }
 
+    setCacheControl(data: TCacheControl) {
+        this.setHeader('Cache-Control', renderCacheControl(data))
+    }
+
     setCookieRaw(rawValue: string) {
         const cookies = this._headers['Set-Cookie'] = (this._headers['Set-Cookie'] || []) as string[]
         cookies.push(rawValue)
@@ -91,16 +96,17 @@ export class BaseHttpResponse<BodyType = unknown> {
 
     protected mergeHeaders() {
         const { headers } = useSetHeaders()
+
         const { cookies, removeCookie } = useSetCookies()
         const newCookies  = (this._headers['Set-Cookie'] || [])
         for (const cookie of newCookies) {
             removeCookie(cookie.slice(0, cookie.indexOf('=')))
         }
-        const setCookie = [ ...newCookies, ...cookies()]
         this._headers = {
             ...headers,
             ...this._headers,
         }
+        const setCookie = [ ...newCookies, ...cookies()]
         if (setCookie && setCookie.length) {
             this._headers['Set-Cookie'] = setCookie
         }
@@ -118,7 +124,7 @@ export class BaseHttpResponse<BodyType = unknown> {
 
     respond() {
         const { rawResponse, hasResponded } = useResponse()
-        const { method } = useRequest()
+        const { method, rawRequest } = useRequest()
         if (hasResponded()) {
             throw panic('The response was already sent.')
         }
@@ -130,11 +136,14 @@ export class BaseHttpResponse<BodyType = unknown> {
             res.writeHead(this.status, {
                 ...this._headers,
             })
+            rawRequest.once('close', () => {
+                stream.destroy()
+            })
             if (method === 'HEAD') {
                 stream.destroy()
                 res.end()
             } else {
-                stream.on('error', (err) => {
+                stream.on('error', () => {
                     stream.destroy()
                     res.end()
                 })

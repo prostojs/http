@@ -1,6 +1,7 @@
 export * from './headers'
 export * from './header-accept'
 export * from './header-authorization'
+export * from './header-set-cache-control'
 export * from './req-res'
 export * from './cookies'
 export * from './search-params'
