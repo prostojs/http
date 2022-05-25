@@ -1,3 +1,12 @@
+## [0.0.1-alpha.4](https://github.com/prostojs/http/compare/v0.0.1-alpha.3...v0.0.1-alpha.4) (2022-05-25)
+
+
+### Features
+
+* **cache-control:** add cache-control composable ([f39fcd0](https://github.com/prostojs/http/commit/f39fcd0522698f39aac601a1567130a7a0cbfafa))
+
+
+
 ## [0.0.1-alpha.3](https://github.com/prostojs/http/compare/v0.0.1-alpha.2...v0.0.1-alpha.3) (2022-05-22)
 
 

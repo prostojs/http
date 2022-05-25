@@ -1,6 +1,6 @@
 {
   "name": "@prostojs/http",
-  "version": "0.0.1-alpha.3",
+  "version": "0.0.1-alpha.4",
   "description": "An alternative HTTP server with composable functions",
   "main": "index.js",
   "module": "dist/http.esm-bundler.js",
