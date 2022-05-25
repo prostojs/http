@@ -1,5 +1,7 @@
 # prostojs/http
 
+**!!! This is work-in-progress library, breaking changes are expected !!!**
+
 As an alternative for `express` and `fastify` this `@prostojs/http` brings the whole different approach for processing http requests.
 It utilizes such a technique as you can see in React Hooks or Vue Composables. It has only a dependency on [@prostojs/router](https://github.com/prostojs/router) (an alternative to `find-my-way` used by `fastify`) which is a very fast (see benchmarks [here](https://github.com/prostojs/router-benchmark)) and robust URI router. 
 
