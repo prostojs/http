@@ -104,6 +104,8 @@ app.get('with-query', () => {
 
 To get a reference to the raw request instance use composable function `useRequest`
 
+You probably don't need a `rawRequest` unless you are developing some new feature. All the base use-cases covered with other composable functions.
+
 ```js
 import { useRequest } from '@prostojs/http'
 app.get('test', () => {
@@ -213,9 +215,43 @@ app.get('test', async () => {
 
 ## Response
 
-To get a reference to the raw response instance use composable function `useResponse`
+The easiest way to respond to the request is to return some value from handler function like this:
+```js
+app.get('string_response', () => {
+    return 'hello world!'
+    // responds with:
+    // 200
+    // Content-Length: ...
+    // Content-Type: text/plain
+    // hello world!
+})
+```
 
-An example of using raw response instance. When you get a raw response instance you take away the control of the response on yourself. The framework will not process the output of the handler in this case.
+Whatever is returned from the handler is the response. `Content-Type` and `Content-Length` headers will be calculated accordingly.
+
+If a handler returns a json object, it will be stringified and the header `Content-Type` will be set to `application/json` automatically:
+```js
+app.get('json_response', () => {
+    return { value: 'hello world!' }
+    // responds with:
+    // 200
+    // Content-Length: ...
+    // Content-Type: application/json
+    // { "value": "hello world!" }
+})
+```
+
+**Supported response types:**
+1. string   (text/plain, text/html, application/xml - depending on the content)
+2. object/array (application/json)
+3. boolean  (text/plain)
+4. readable stream (you must specify `Content-Type` and `Content-Length` headers yourself)
+
+**Raw Response**: When it is needed to take the full control of the response, use composable function `useResponse`
+
+When you get a raw response instance you take away the control of the response on yourself. The framework will not process the output of the handler in this case.
+
+An example of using raw response instance:
 ```js
 import { useResponse } from '@prostojs/http'
 app.get('test', () => {
@@ -335,6 +371,40 @@ app.get('static/*', () => {
 Function `serveFile` returns a readable stream and prepares all the neccessary response headers (like content-length, content-type etc).
 
 It can handle etag and range as well.
+
+```js
+serveFile(filePath, options)
+```
+
+**serveFile options**
+```ts
+{
+    // Any header to add
+    headers?: Record<string, string>
+
+    // Cache-Control header
+    cacheControl?: TCacheControl
+
+    // Expires header
+    expires?: Date | string | number
+
+    // when true a header "Pragma: no-cache" will be added
+    pragmaNoCache?: boolean
+
+    // the base directory path
+    baseDir?: string
+
+    // default extension will be added to the filePath
+    defaultExt?: string
+
+    // when true lists files in directory
+    listDirectory?: boolean
+    
+    // put 'index.html'
+    // to automatically serve it from the folder    
+    index?: string              
+}
+```
 
 Built-in file server example:
 
