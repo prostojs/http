@@ -5,6 +5,7 @@ import { clearCurrentHttpContext, setCurrentHttpContext, THttpCustomContext, use
 import { createServer } from './http'
 import { createResponseFrom } from './response'
 import { TProstoHttpHandler, TProstoServerOptions } from './types'
+import { banner } from './utils/banner'
 import { panic } from './utils/panic'
 
 export class ProstoHttpServer {
@@ -84,7 +85,7 @@ export class ProstoHttpServer {
                     restoreCtx()
                     createResponseFrom(e)?.respond()
                     clearCurrentHttpContext()
-                    console.error(e)
+                    console.error(__DYE_RED_BRIGHT__ + __DYE_BOLD__ + banner(), e, __DYE_RESET__)
                 })
                 // .finally(() => {
                 //     console.log('done')
